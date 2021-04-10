@@ -1,10 +1,11 @@
 from nltk.tokenize import word_tokenize
 from map import Map
 from reduce import Reduce
-from os import listdir
+from os import listdir, remove
 from os.path import isfile, join
 import ast
 import itertools
+
 
 class Master():
 
@@ -16,6 +17,7 @@ class Master():
         self.reduceThreads = []
 
     def split(self):
+        print(self.files)
         for path in self.files:
             with open(path, 'r') as file:
                 self.data = word_tokenize(file.read().lower())
@@ -37,7 +39,9 @@ class Master():
         print("Map done")
 
     def reducer(self):
-        open("output.txt", "w")
+        with open("output.txt", "w") as file:
+            pass
+
         for id, data in enumerate(self.data):
             reduceThread = Reduce(data, id)
             reduceThread.start()
@@ -59,8 +63,16 @@ class Master():
         self.data = shuffleData
         print("Shuffle done")
 
+    def deleteFiles(self):
+        filePaths = [f for f in listdir("data_map") if isfile(join("data_map", f))]
+        for path in filePaths:
+            remove(f"data_map\{path}")
+        print("Files removed")
+
+
 if __name__ == "__main__":
     mapReduce = Master('shakespeare.txt')
+    mapReduce.deleteFiles()
     mapReduce.split()
     mapReduce.mapper()
     mapReduce.shuffle()
