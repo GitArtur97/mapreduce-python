@@ -2,8 +2,8 @@ import json, math
 from multiprocessing import Process
 import filehandler
 
-
 class MapReduce():
+
     def __init__(self, input_file_path, num_of_mappers, num_of_reducers, directory_input = "input", directory_output = "output"):
 
         self.directory_input = directory_input
@@ -11,14 +11,10 @@ class MapReduce():
 
         filehandler.delete_files(self.directory_input)
         filehandler.delete_files(self.directory_output)
+        filehandler.split_file_by_lines(input_file_path, num_of_mappers, directory_input)
 
-        self.num_of_mappers = filehandler.split_file_by_lines(input_file_path, num_of_mappers, directory_input)
+        self.num_of_mappers = num_of_mappers
         self.num_of_reducers = num_of_reducers
-
-    def divide_chunks(self, l, n):
-
-        for i in range(0, len(l), n):
-            yield l[i:i + n]
 
     def run_mapper(self, index):
 
@@ -83,8 +79,12 @@ class MapReduce():
             p = Process(target=self.run_reducer, args=(thread_id,))
             p.start()
             rdc_workers.append(p)
+
         [t.join() for t in rdc_workers]
 
 if __name__ == "__main__":
-    map_reduce = MapReduce('shakespeare.txt', 3, 2)
+    num_mapper = 4
+    num_reducer = 2
+    map_reduce = MapReduce('shakespeare.txt', num_mapper, num_reducer)
     map_reduce.run()
+    filehandler.join_key_value_files(num_reducer)

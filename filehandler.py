@@ -1,4 +1,4 @@
-import os, math
+import os, math, json
 
 def split_file_by_lines(input_file_path, number_of_splits, dir_to_save ="input"):
     file_number = 0
@@ -14,7 +14,6 @@ def split_file_by_lines(input_file_path, number_of_splits, dir_to_save ="input")
                 for line in chunk:
                     new_file.write(line)
             file_number += 1
-    return file_number
 
 def split_to_part(lst, n):
     for i in range(0, len(lst), n):
@@ -32,9 +31,30 @@ def delete_files(directory_path):
         for path in filePaths:
             os.remove(f"{directory_path}\{path}")
 
+def join_key_value_files(number_of_files, directory_path ="output", file_name ="reduce"):
+
+    key_values_map = {}
+    for file_index in range(number_of_files):
+        with open(rf"{directory_path}\{file_name}_{file_index}.txt", "r") as file:
+            file_data = json.load(file)
+            for (key, value) in file_data:
+                if not (key in key_values_map):
+                    key_values_map[key] = [value]
+                else:
+                    key_values_map[key].append(value)
+
+    key_value_list = []
+    for key in key_values_map:
+        key_value_list.append([key, sum(key_values_map[key])])
+
+    with open(rf"{directory_path}\output.txt", "w+") as output_file:
+        json.dump(key_value_list, output_file)
+
+
 if __name__ == "__main__":
-    delete_files("input")
-    split_file_by_lines('shakespeare.txt', 4)
+    # delete_files("input")
+    # split_file_by_lines('shakespeare.txt', 4)
+    join_key_value_files(3)
 
 
 
