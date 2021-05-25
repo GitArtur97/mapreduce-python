@@ -1,10 +1,14 @@
-import json, math
+import json
+import math
 from multiprocessing import Process
+
 import filehandler
 
-class MapReduce():
 
-    def __init__(self, input_file_path, num_of_mappers, num_of_reducers, directory_input = "input", directory_output = "output"):
+class MapReduce:
+
+    def __init__(self, input_file_path, num_of_mappers, num_of_reducers, directory_input="input",
+                 directory_output="output"):
 
         self.directory_input = directory_input
         self.directory_output = directory_output
@@ -23,15 +27,16 @@ class MapReduce():
             value = input_split_file.read()
 
         mapper_result = self.mapper(key, value)
-        for reducer_index, chunk in enumerate(filehandler.split_to_part(mapper_result, math.ceil(len(mapper_result) / self.num_of_reducers))):
-            with open(f"{self.directory_output}\map_{index}_{reducer_index}.txt", "w+") as map_file:
+        for reducer_index, chunk in enumerate(
+                filehandler.split_to_part(mapper_result, math.ceil(len(mapper_result) / self.num_of_reducers))):
+            with open(rf"{self.directory_output}\map_{index}_{reducer_index}.txt", "w+") as map_file:
                 json.dump([(key, value) for (key, value) in chunk], map_file)
 
     def run_reducer(self, index):
 
         key_values_map = {}
         for mapper_index in range(self.num_of_mappers):
-            with open(f"{self.directory_output}\map_{mapper_index}_{index}.txt", "r") as map_file:
+            with open(rf"{self.directory_output}\map_{mapper_index}_{index}.txt", "r") as map_file:
                 mapper_results = json.load(map_file)
                 for (key, value) in mapper_results:
                     if not (key in key_values_map):
@@ -42,7 +47,7 @@ class MapReduce():
         for key in key_values_map:
             key_value_list.append(self.reducer(key, key_values_map[key]))
 
-        with open(rf"{self.directory_output}\reduce_{index}.txt","w+") as output_file:
+        with open(rf"{self.directory_output}\reduce_{index}.txt", "w+") as output_file:
             json.dump(key_value_list, output_file)
 
     def mapper(self, key, value):
@@ -51,7 +56,7 @@ class MapReduce():
         from nltk.tokenize import word_tokenize
         data = word_tokenize(value.lower())
         for word in data:
-            results.append((word,1))
+            results.append((word, 1))
 
         return results
 
@@ -81,6 +86,7 @@ class MapReduce():
             rdc_workers.append(p)
 
         [t.join() for t in rdc_workers]
+
 
 if __name__ == "__main__":
     num_mapper = 4
