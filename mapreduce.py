@@ -27,21 +27,30 @@ class MapReduce:
             value = input_split_file.read()
 
         mapper_result = self.mapper(key, value)
-        for reducer_index, chunk in enumerate(
-                filehandler.split_to_part(mapper_result, math.ceil(len(mapper_result) / self.num_of_reducers))):
-            with open(rf"{self.directory_output}\map_{index}_{reducer_index}.txt", "w+") as map_file:
-                json.dump([(key, value) for (key, value) in chunk], map_file)
 
-    def run_reducer(self, index):
+        with open(rf"{self.directory_output}\map_{index}.txt", "w+") as map_file:
+            json.dump([(key, value) for (key, value) in mapper_result], map_file)
+
+    def run_shuffler(self):
 
         key_values_map = {}
         for mapper_index in range(self.num_of_mappers):
-            with open(rf"{self.directory_output}\map_{mapper_index}_{index}.txt", "r") as map_file:
+            with open(rf"{self.directory_output}\map_{mapper_index}.txt", "r") as map_file:
                 mapper_results = json.load(map_file)
                 for (key, value) in mapper_results:
                     if not (key in key_values_map):
                         key_values_map[key] = []
                     key_values_map[key].append(value)
+
+        number_to_split = math.ceil(len(key_values_map) / self.num_of_reducers)
+        for index, chunk in enumerate(filehandler.split_to_part(list(key_values_map.items()), number_to_split)):
+            with open(rf"{self.directory_output}\shuffle_{index}.txt", "w+") as shuffle_file:
+                json.dump([(key, value) for (key, value) in chunk], shuffle_file)
+
+    def run_reducer(self, index):
+
+        with open(rf"{self.directory_output}\shuffle_{index}.txt", "r") as shuffle_file:
+            key_values_map = dict(json.load(shuffle_file))
 
         key_value_list = []
         for key in key_values_map:
@@ -79,6 +88,10 @@ class MapReduce:
             map_workers.append(p)
 
         [t.join() for t in map_workers]
+
+        p = Process(target=self.run_shuffler)
+        p.start()
+        p.join()
 
         for thread_id in range(self.num_of_reducers):
             p = Process(target=self.run_reducer, args=(thread_id,))

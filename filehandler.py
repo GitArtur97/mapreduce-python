@@ -37,19 +37,12 @@ def delete_files(directory_path):
 
 
 def join_key_value_files(number_of_files, directory_path="output", file_name="reduce"):
-    key_values_map = {}
+
+    key_value_list = []
     for file_index in range(number_of_files):
         with open(rf"{directory_path}\{file_name}_{file_index}.txt", "r") as file:
             file_data = json.load(file)
-            for (key, value) in file_data:
-                if not (key in key_values_map):
-                    key_values_map[key] = [value]
-                else:
-                    key_values_map[key].append(value)
-
-    key_value_list = []
-    for key in key_values_map:
-        key_value_list.append([key, sum(key_values_map[key])])
+            key_value_list += file_data
 
     with open(rf"{directory_path}\output.txt", "w+") as output_file:
         json.dump(key_value_list, output_file)
